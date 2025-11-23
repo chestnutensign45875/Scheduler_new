@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus Scheduler</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-bg: #ffffff;
+            --sidebar-hover: #f3f4f6;
+            --booked: #ef4444;
+            --yours: #f59e0b;
+            --avail: #10b981;
+            --expired: #9ca3af;
+            --sidebar-w: 260px;
+        }
+
+        /* Dark Theme Variables */
+        body.dark-mode {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --bg: #111827;
+            --card: #1f2937;
+            --text: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            --sidebar-bg: #1f2937;
+            --sidebar-hover: #374151;
+            --booked: #f87171;
+            --yours: #fbbf24;
+            --avail: #34d399;
+            --expired: #4b5563;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s; }
+        
+        /* --- SIDEBAR --- */
+        .sidebar { width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; transition: background 0.3s, border-color 0.3s; }
+        .brand { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 12px; }
+        
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; gap: 12px; transition: 0.2s; font-weight: 500; }
+        .nav-item:hover { background: var(--sidebar-hover); color: var(--text); }
+        .nav-item.active { background: rgba(37, 99, 235, 0.1); color: var(--primary); font-weight: 600; }
+        .logout { margin-top: auto; color: var(--booked); }
+        .logout:hover { background: rgba(239, 68, 68, 0.1); }
+
+        /* --- MAIN CONTENT --- */
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-title { font-size: 1.8rem; font-weight: 700; }
+        
+        .top-controls { display: flex; align-items: center; gap: 15px; }
+        .theme-toggle { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 20px; cursor: pointer; color: var(--text); transition: 0.2s; }
+        .theme-toggle:hover { background: var(--sidebar-hover); }
+
+        .user-badge { background: var(--card); color: var(--text); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.9rem; font-weight: 600; display: flex; gap: 8px; align-items: center;}
+
+        /* --- MODALS (LOGIN & BOOKING) --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        
+        /* Login Specifics */
+        #login-screen { background: var(--bg); }
+        #login-screen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1920&auto=format&fit=crop'); background-size: cover; background-position: center; opacity: 0.9; filter: blur(3px); z-index: 1; }
+        
+        /* Booking Modal Specifics */
+        #booking-modal { background: rgba(0,0,0,0.5); display: none; z-index: 2000; }
+        .modal-card { background: var(--card); padding: 30px; border-radius: 16px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; z-index: 2; animation: slideIn 0.3s ease-out; color: var(--text); }
+        
+        .login-container { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; }
+        .login-card { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 380px; margin-right: 25%; animation: slideIn 0.5s ease-out; }
+        .dark-mode .login-card { background: rgba(31, 41, 55, 0.95); color: white; } 
+        
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Login Inputs */
+        .login-logo { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .login-logo span { font-size: 1.5rem; font-weight: bold; color: #333; }
+        .dark-mode .login-logo span { color: white; }
+        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 1rem; background: #f9fafb; }
+        .login-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .login-btn:hover { background: var(--primary-hover); }
+        .error-msg { color: #ef4444; font-size: 0.9rem; margin-top: 10px; display: none; }
+
+        /* --- DASHBOARD CONTROLS --- */
+        .day-switch { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px; width: fit-content; }
+        .day-btn { padding: 10px 20px; border: none; background: transparent; cursor: pointer; color: var(--text-secondary); font-weight: 600; transition: 0.2s; }
+        .day-btn.active { background: var(--primary); color: white; }
+        .day-btn:hover:not(.active) { background: var(--sidebar-hover); }
+
+        /* --- GRID SYSTEM --- */
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .slot-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; transition: 0.2s; display: flex; flex-direction: column; }
+        .slot-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .slot-card.expired { opacity: 0.7; background: var(--sidebar-hover); border-color: var(--border); }
+
+        .status-bar { height: 6px; width: 100%; border-radius: 3px; margin-bottom: 15px; }
+        .slot-time { font-size: 1.2rem; font-weight: 700; margin-bottom: 5px; color: var(--text); }
+        .slot-status-text { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+        .slot-details { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; flex-grow: 1; line-height: 1.4; }
+        .slot-note { background: var(--sidebar-hover); padding: 8px; border-radius: 6px; font-size: 0.85rem; margin-top: 10px; border-left: 3px solid var(--primary); }
+
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; margin-top: 5px; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        
+        /* --- TABLES --- */
+        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: var(--sidebar-hover); font-weight: 600; color: var(--text-secondary); padding: 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 15px; border-bottom: 1px solid var(--border); color: var(--text); }
+        .rank-badge { background: rgba(251, 191, 36, 0.2); color: #d97706; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
+        .dark-mode .rank-badge { color: #fbbf24; }
+
+        /* --- ATTENDANCE --- */
+        .attendance-card { background: var(--card); border: 1px solid var(--border); padding: 30px; border-radius: 12px; text-align: center; max-width: 600px; margin: 0 auto; }
+        .stat-circle { width: 150px; height: 150px; border-radius: 50%; border: 10px solid var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2rem; font-weight: bold; color: var(--primary); background: rgba(37, 99, 235, 0.05); }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .stat-box { background: var(--sidebar-hover); padding: 15px; border-radius: 8px; }
+        .stat-box h3 { margin: 0; font-size: 1.5rem; color: var(--text); }
+        .stat-box p { margin: 5px 0 0; font-size: 0.9rem; color: var(--text-secondary); }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--avail); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* --- FORM ELEMENTS --- */
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; }
+        .radio-group { display: flex; gap: 15px; margin-bottom: 15px; }
+        .radio-option { display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text); }
+
+        /* --- TOAST --- */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
+            border-radius: 8px; padding: 16px; position: fixed; z-index: 2000; bottom: 30px; left: 50%; transform: translateX(-50%);
+            font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast.success { background-color: var(--avail); color: #fff; }
+        #toast.info { background-color: var(--primary); color: #fff; }
+        #toast.reset { background-color: #f59e0b; color: #fff; }
+        #toast.error { background-color: var(--booked); color: #fff; }
+
+        /* --- FEEDBACK --- */
+        .center-box { background: var(--card); padding: 40px; border-radius: 12px; text-align: center; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin: 15px 0; resize: none; font-family: inherit; background: var(--bg); color: var(--text); }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST -->
+    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-msg">Message</span></div>
+
+    <!-- LOGIN -->
+    <div id="login-screen" class="modal-overlay">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">
+                    <i class="fa-solid fa-graduation-cap"></i> <span>CampusLink</span>
+                </div>
+                <h1 class="login-header" style="color: #333; margin-bottom: 10px;">Welcome Back!</h1>
+                <p class="login-subtext">Sign in to access the Smart Campus Scheduler</p>
+                
+                <input type="text" id="userId" class="login-input" placeholder="User ID (e.g., T101, S201)">
+                <input type="password" id="userPass" class="login-input" placeholder="Password">
+                
+                <button class="login-btn" onclick="attemptLogin()">Login</button>
+                <div id="loginError" class="error-msg">Invalid ID or Password</div>
+                
+                <div style="margin-top:15px; font-size:0.8rem; color:#9ca3af;">
+                    Teachers: teach123 | Students: learn123
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING MODAL -->
+    <div id="booking-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="margin-top:0; margin-bottom: 20px;">Book Class Slot</h2>
+            
+            <label>Select Class Type:</label>
+            <div class="radio-group">
+                <label class="radio-option"><input type="radio" name="classType" value="Theory" checked> Theory</label>
+                <label class="radio-option"><input type="radio" name="classType" value="Lab"> Lab</label>
+            </div>
+            
+            <label>Instructions for Students (Optional):</label>
+            <textarea id="booking-instructions" class="form-input" style="height:80px;" placeholder="e.g. Bring Physics Lab Manual..."></textarea>
+            
+            <div style="display:flex; gap:10px; justify-content: flex-end;">
+                <button class="btn" style="background:var(--text-secondary); width:auto;" onclick="closeModal()">Cancel</button>
+                <button class="btn" style="background:var(--primary); width:auto;" onclick="confirmBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand"><i class="fa-solid fa-calendar-days"></i> Scheduler Pro</div>
+        
+        <div class="nav-item active" onclick="switchView('dashboard')" id="nav-dash">
+            <i class="fa-solid fa-table-columns"></i> Time Slots
+        </div>
+        <div class="nav-item" onclick="switchView('attendance')" id="nav-att">
+            <i class="fa-solid fa-clipboard-user"></i> Attendance
+        </div>
+        <div class="nav-item" onclick="switchView('leaderboard')" id="nav-leader">
+            <i class="fa-solid fa-trophy"></i> Leaderboard
+        </div>
+        <div class="nav-item" onclick="switchView('feedback')" id="nav-feed">
+            <i class="fa-solid fa-comment-dots"></i> Feedback
+        </div>
+
+        <div class="nav-item logout" onclick="logout()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+        <div class="header">
+            <div class="page-title" id="page-title">Daily Schedule</div>
+            <div class="top-controls">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Switch Theme">
+                    <i class="fa-solid fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="user-badge" id="user-badge">Guest</div>
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="view-section active">
+            <!-- Day Toggle -->
+            <div class="day-switch">
+                <button class="day-btn active" id="btn-today" onclick="switchDay('today')">Today</button>
+                <button class="day-btn" id="btn-tomorrow" onclick="switchDay('tomorrow')">Tomorrow</button>
+            </div>
+            
+            <div class="time-grid" id="slots-grid"></div>
+        </div>
+
+        <!-- VIEW: ATTENDANCE -->
+        <div id="view-attendance" class="view-section">
+            <div id="attendance-content"></div>
+        </div>
+
+        <!-- VIEW: LEADERBOARD -->
+        <div id="view-leaderboard" class="view-section">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead><tr><th>Rank</th><th>Student Name</th><th>Exam Score</th><th>Attendance Rate</th></tr></thead>
+                    <tbody id="leaderboard-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW: FEEDBACK -->
+        <div id="view-feedback" class="view-section">
+            <div class="center-box" style="text-align: left;">
+                <h2 style="margin-top:0; color:var(--text);">Submit Feedback</h2>
+                <p style="color:var(--text-secondary);">Report facility issues or request equipment.</p>
+                <textarea placeholder="Describe your issue or request..."></textarea>
+                <button class="btn" style="background:var(--primary);" onclick="showToast('Feedback Sent!', 'success')">Submit Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- USER DATABASE ---
+        const users = [
+            { id: 'T101', pass: 'teach123', name: 'Sarah Johnson', role: 'teacher' },
+            { id: 'T102', pass: 'teach123', name: 'Michael Chen', role: 'teacher' },
+            { id: 'T103', pass: 'teach123', name: 'Emily Davis', role: 'teacher' },
+            { id: 'T104', pass: 'teach123', name: 'Robert Wilson', role: 'teacher' },
+            { id: 'T105', pass: 'teach123', name: 'Linda Martinez', role: 'teacher' },
+            { id: 'S201', pass: 'learn123', name: 'Ayush Sharma', role: 'student' },
+            { id: 'S202', pass: 'learn123', name: 'Nalin Sharma', role: 'student' },
+            { id: 'S203', pass: 'learn123', name: 'Pulak Sharma', role: 'student' },
+            { id: 'S204', pass: 'learn123', name: 'Swarup Jain', role: 'student' },
+            { id: 'S205', pass: 'learn123', name: 'Palak Singhal', role: 'student' }
+        ];
+
+        // --- DATA MODEL ---
+        let currentUser = null;
+        let viewingDay = 'today'; // 'today' or 'tomorrow'
+        let activeSlotId = null;  // Used for modal
+
+        // Data Structures
+        let scheduleData = { today: [], tomorrow: [] };
+        let waitlistData = { today: [], tomorrow: [] };
+        let attendanceStats = {};
+
+        function getFreshSlots() {
+            return [
+                { id: 0, time: "09:00 AM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 1, time: "10:00 AM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 2, time: "11:00 AM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 3, time: "12:00 PM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 4, time: "01:00 PM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 5, time: "02:00 PM", bookedBy: null, type: "Theory", instructions: "" },
+                { id: 6, time: "03:00 PM", bookedBy: null, type: "Theory", instructions: "" }
+            ];
+        }
+
+        // --- TIME & EXPIRE LOGIC ---
+        function isSlotExpired(timeStr) {
+            if (viewingDay === 'tomorrow') return false;
+            const now = new Date();
+            const slotDate = new Date(); 
+            const [time, modifier] = timeStr.split(' ');
+            let [hours, minutes] = time.split(':');
+            hours = parseInt(hours);
+            if (hours === 12 && modifier === 'AM') hours = 0;
+            if (hours !== 12 && modifier === 'PM') hours += 12;
+            slotDate.setHours(hours, parseInt(minutes), 0, 0);
+            return now > slotDate;
+        }
+
+        // --- INIT & STORAGE ---
+        function init() {
+            loadData();
+            initTheme();
+            users.filter(u => u.role === 'student').forEach(s => {
+                if(!attendanceStats[s.id]) attendanceStats[s.id] = { total: 0, present: 0, name: s.name };
+            });
+            saveData();
+            renderLeaderboard();
+        }
+
+        function loadData() {
+            const storedData = localStorage.getItem('scheduler_data_v3');
+            const todayStr = new Date().toDateString();
+
+            if (storedData) {
+                const parsed = JSON.parse(storedData);
+                
+                if (parsed.lastDate && parsed.lastDate !== todayStr) {
+                    // Shift Schedule
+                    scheduleData.today = parsed.scheduleData.tomorrow || getFreshSlots();
+                    scheduleData.tomorrow = getFreshSlots();
+                    waitlistData.today = parsed.waitlistData.tomorrow || [];
+                    waitlistData.tomorrow = [];
+                    attendanceStats = parsed.attendanceStats || {};
+                    setTimeout(() => showToast("New Day: Schedule Advanced", "reset"), 1000);
+                } else {
+                    scheduleData = parsed.scheduleData || { today: getFreshSlots(), tomorrow: getFreshSlots() };
+                    waitlistData = parsed.waitlistData || { today: [], tomorrow: [] };
+                    attendanceStats = parsed.attendanceStats || {};
+                }
+            } else {
+                scheduleData = { today: getFreshSlots(), tomorrow: getFreshSlots() };
+                waitlistData = { today: [], tomorrow: [] };
+                attendanceStats = {};
+            }
+            saveData();
+        }
+
+        function saveData() {
+            const data = { scheduleData, waitlistData, attendanceStats, lastDate: new Date().toDateString() };
+            localStorage.setItem('scheduler_data_v3', JSON.stringify(data));
+        }
+
+        // --- DAY SWITCHING ---
+        function switchDay(day) {
+            viewingDay = day;
+            document.getElementById('btn-today').className = day === 'today' ? 'day-btn active' : 'day-btn';
+            document.getElementById('btn-tomorrow').className = day === 'tomorrow' ? 'day-btn active' : 'day-btn';
+            renderSlots();
+        }
+
+        // --- RENDER SLOTS ---
+        function renderSlots() {
+            const grid = document.getElementById('slots-grid');
+            grid.innerHTML = '';
+            const currentSlots = scheduleData[viewingDay];
+
+            currentSlots.forEach(slot => {
+                const card = document.createElement('div');
+                const expired = isSlotExpired(slot.time);
+                card.className = `slot-card ${expired ? 'expired' : ''}`;
+                
+                let bookerUser = users.find(u => u.id === slot.bookedBy);
+                let bookerName = bookerUser ? bookerUser.name : '';
+                let instructionHtml = slot.bookedBy && slot.instructions ? `<div class="slot-note"><i class="fa-solid fa-circle-info"></i> ${slot.instructions}</div>` : '';
+
+                let barColor = 'var(--avail)'; 
+                let statusText = 'Available';
+                let textColor = 'var(--avail)';
+                
+                if (expired) {
+                    barColor = 'var(--expired)'; statusText = 'Period Over'; textColor = 'var(--text-secondary)';
+                } else if (slot.bookedBy) {
+                    if (currentUser.role === 'teacher' && slot.bookedBy === currentUser.id) {
+                        barColor = 'var(--yours)'; statusText = 'Booked by You'; textColor = 'var(--yours)';
+                    } else {
+                        barColor = 'var(--booked)'; statusText = 'Occupied'; textColor = 'var(--booked)';
+                    }
+                }
+
+                let btnHtml = '';
+                if (expired) {
+                    btnHtml = `<div style="color:var(--text-secondary); font-style:italic; margin-top:auto;"><i class="fa-solid fa-lock"></i> Time Locked</div>`;
+                } else if (currentUser.role === 'teacher') {
+                    // CHANGE: Open Modal for Booking / Waitlist
+                    if (!slot.bookedBy) btnHtml = `<button class="btn" style="background:var(--primary);" onclick="openBookingModal(${slot.id}, 'book')">Book Slot</button>`;
+                    else if (slot.bookedBy === currentUser.id) btnHtml = `<button class="btn" style="background:var(--booked);" onclick="cancelSlot(${slot.id})">Cancel</button>`;
+                    else btnHtml = `<button class="btn" style="background:var(--text-secondary);" onclick="openBookingModal(${slot.id}, 'waitlist')">Waitlist</button>`;
+                } else {
+                    if (slot.bookedBy) btnHtml = `<div style="color:var(--primary); font-weight:600; margin-top:auto;">Scheduled</div>`;
+                    else btnHtml = `<div style="color:var(--text-secondary); margin-top:auto; font-style:italic;">Free Period</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="status-bar" style="background:${barColor}"></div>
+                    <div class="slot-time">${slot.time}</div>
+                    <div class="slot-status-text" style="color:${textColor}">${statusText}</div>
+                    <div class="slot-details">
+                        ${slot.bookedBy ? `<strong>${bookerName}</strong><br>${slot.type}` : (expired ? 'Past Class' : 'Open for booking')}
+                        ${instructionHtml}
+                    </div>
+                    ${btnHtml}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- ACTIONS (UPDATED FOR MODAL) ---
+        let currentActionType = ''; // 'book' or 'waitlist'
+
+        function openBookingModal(id, action) {
+            const slotsList = scheduleData[viewingDay];
+            if (isSlotExpired(slotsList.find(s=>s.id===id).time)) return showToast("Time slot has passed.", "error");
+            
+            activeSlotId = id;
+            currentActionType = action;
+            document.getElementById('booking-instructions').value = ''; // Clear prev input
+            document.getElementById('booking-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('booking-modal').style.display = 'none';
+            activeSlotId = null;
+        }
+
+        function confirmBooking() {
+            const slotsList = scheduleData[viewingDay];
+            const slot = slotsList.find(s => s.id === activeSlotId);
+            const instructions = document.getElementById('booking-instructions').value;
+            const type = document.querySelector('input[name="classType"]:checked').value;
+
+            if (currentActionType === 'book') {
+                slot.bookedBy = currentUser.id;
+                slot.type = type;
+                slot.instructions = instructions;
+                showToast(`Booked for ${viewingDay === 'today' ? 'Today' : 'Tomorrow'}`, "success");
+            } else {
+                // Waitlist
+                waitlistData[viewingDay].push({ 
+                    teacherId: currentUser.id, 
+                    slotId: activeSlotId, 
+                    type: type, 
+                    instructions: instructions // Save instructions to waitlist too!
+                });
+                showToast("Added to Waitlist", "info");
+            }
+
+            saveData();
+            renderSlots();
+            closeModal();
+        }
+
+        async function cancelSlot(id) {
+            const slotsList = scheduleData[viewingDay];
+            if (isSlotExpired(slotsList.find(s=>s.id===id).time)) return showToast("Cannot cancel past classes.", "error");
+            if(!confirm("Cancel this class?")) return;
+            
+            const slot = slotsList.find(s => s.id === id);
+            slot.bookedBy = null;
+            slot.instructions = ""; // Clear instructions
+            
+            try {
+                // Prepare data for backend (Only for current viewing day)
+                const slotsForBackend = slotsList.map(s => ({ id: s.id, bookedBy: s.bookedBy ? parseInt(s.bookedBy.substring(1)) : 0, type: s.type }));
+                const waitlistForBackend = waitlistData[viewingDay].map(w => ({ teacherId: parseInt(w.teacherId.substring(1)), slotId: w.slotId, type: w.type }));
+                
+                const updatedData = await window.api.runScheduler({ slots: slotsForBackend, waitlist: waitlistForBackend });
+                
+                // Update State
+                updatedData.forEach(uSlot => {
+                    const local = slotsList.find(s => s.id === uSlot.id);
+                    if(uSlot.bookedBy !== 0 && uSlot.bookedBy !== null) {
+                        local.bookedBy = "T" + uSlot.bookedBy; 
+                        local.type = uSlot.type;
+                        // MERGE INSTRUCTIONS FROM WAITLIST IF FOUND
+                        // Logic: Find the matching waitlist entry for this teacher and slot
+                        const wIndex = waitlistData[viewingDay].findIndex(w => w.teacherId === local.bookedBy && w.slotId === local.id);
+                        if(wIndex !== -1) {
+                            local.instructions = waitlistData[viewingDay][wIndex].instructions || "";
+                            // Remove from waitlist locally as backend processed it
+                            waitlistData[viewingDay].splice(wIndex, 1);
+                        }
+                    } else {
+                        local.bookedBy = null;
+                    }
+                });
+                saveData();
+                showToast("Cancelled & Updated", "info");
+                renderSlots();
+            } catch (e) {
+                console.error("Backend offline");
+                saveData();
+                renderSlots();
+                showToast("Cancelled (Local Mode)", "info");
+            }
+        }
+
+        // --- STANDARD UTILS ---
+        function showToast(message, type = 'success') {
+            const x = document.getElementById("toast");
+            const msg = document.getElementById("toast-msg");
+            msg.innerText = message;
+            let icon = '<i class="fa-solid fa-circle-check"></i>';
+            if(type === 'reset') icon = '<i class="fa-solid fa-calendar-day"></i>';
+            if(type === 'error') icon = '<i class="fa-solid fa-circle-exclamation"></i>';
+            x.innerHTML = `${icon} <span>${message}</span>`;
+            x.className = "toast show " + type;
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        function initTheme() {
+            const isDark = localStorage.getItem('theme') === 'dark';
+            if(isDark) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+
+        function attemptLogin() {
+            const idInput = document.getElementById('userId').value.trim();
+            const passInput = document.getElementById('userPass').value.trim();
+            const user = users.find(u => u.id === idInput && u.pass === passInput);
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('user-badge').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${user.name}`;
+                renderSlots();
+                if(user.role === 'student') { } else { renderAttendanceView(); }
+                renderLeaderboard();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function logout() { location.reload(); }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            const navMap = { 'dashboard': 'nav-dash', 'attendance': 'nav-att', 'leaderboard': 'nav-leader', 'feedback': 'nav-feed' };
+            if(navMap[viewName]) document.getElementById(navMap[viewName]).classList.add('active');
+            const titles = { 'dashboard': 'Class Schedule', 'attendance': 'Attendance Record', 'leaderboard': 'Class Leaderboard', 'feedback': 'Feedback Corner' };
+            document.getElementById('page-title').innerText = titles[viewName];
+            if(viewName === 'attendance') renderAttendanceView();
+            if(viewName === 'leaderboard') renderLeaderboard();
+        }
+
+        function renderAttendanceView() {
+            const container = document.getElementById('attendance-content');
+            container.innerHTML = '';
+            if (currentUser.role === 'student') {
+                const myStats = attendanceStats[currentUser.id] || { total: 0, present: 0 };
+                const percentage = myStats.total === 0 ? 0 : Math.round((myStats.present / myStats.total) * 100);
+                container.innerHTML = `
+                    <div class="attendance-card">
+                        <h2 style="color:var(--text)">My Attendance</h2>
+                        <div class="stat-circle">${percentage}%</div>
+                        <div class="stat-grid">
+                            <div class="stat-box"><h3>${myStats.total}</h3><p>Classes Held</p></div>
+                            <div class="stat-box"><h3>${myStats.present}</h3><p>Classes Attended</p></div>
+                        </div>
+                    </div>`;
+            } else {
+                const students = users.filter(u => u.role === 'student');
+                let html = `
+                    <div class="table-container" style="max-width: 800px; margin: 0 auto;">
+                        <div style="padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="margin:0; color:var(--text);">Class Roll Call</h3>
+                            <span style="color:var(--text-secondary); font-size:0.9rem;">Mark students present/absent</span>
+                        </div>
+                        <table class="data-table"><thead><tr><th>ID</th><th>Student Name</th><th>Status</th></tr></thead><tbody>`;
+                students.forEach(s => {
+                    html += `<tr><td>${s.id}</td><td>${s.name}</td><td><label class="switch"><input type="checkbox" checked class="att-check" data-sid="${s.id}"><span class="slider"></span></label></td></tr>`;
+                });
+                html += `</tbody></table><div style="padding:20px; text-align:right;"><button class="btn" style="background:var(--primary); width:auto; padding: 12px 24px;" onclick="submitAttendance()">Submit Attendance</button></div></div>`;
+                container.innerHTML = html;
+            }
+        }
+
+        function submitAttendance() {
+            const checkboxes = document.querySelectorAll('.att-check');
+            checkboxes.forEach(cb => {
+                const sid = cb.getAttribute('data-sid');
+                const isPresent = cb.checked;
+                if (!attendanceStats[sid]) attendanceStats[sid] = { total: 0, present: 0, name: '' };
+                attendanceStats[sid].total += 1;
+                if (isPresent) attendanceStats[sid].present += 1;
+            });
+            saveData();
+            showToast("Attendance Updated", "success");
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const tbody = document.getElementById('leaderboard-body');
+            const students = users.filter(u => u.role === 'student');
+            const rankedStudents = students.map(s => {
+                const stats = attendanceStats[s.id] || { total: 10, present: 9 }; 
+                const pct = stats.total === 0 ? 0 : ((stats.present / stats.total) * 100).toFixed(1);
+                return { ...s, pct: pct, score: (90 + Math.random() * 10).toFixed(1) };
+            }).sort((a, b) => b.pct - a.pct);
+            let html = '';
+            rankedStudents.forEach((s, index) => {
+                html += `<tr><td><span class="rank-badge" style="${index > 2 ? 'background:transparent; color:var(--text-secondary)' : ''}">#${index + 1}</span></td><td>${s.name}</td><td>${s.score}%</td><td><strong>${s.pct}%</strong></td></tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        init();
+    </script>
+</body>
+</html>

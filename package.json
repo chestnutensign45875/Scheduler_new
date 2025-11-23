@@ -1,0 +1,49 @@
+{
+  "name": "school-scheduler",
+  "version": "1.0.0",
+  "description": "Smart Campus Scheduler",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "compile-bridge": "pyinstaller --onefile --distpath dist-python scheduler_bridge.py",
+    "dist": "npm run compile-bridge && electron-builder"
+  },
+  "build": {
+    "appId": "com.scheduler.app",
+    "extraResources": [
+      {
+        "from": "dist-python/",
+        "to": "bin",
+        "filter": [
+          "scheduler_bridge",
+          "scheduler_bridge.exe"
+        ]
+      },
+      {
+        "from": ".",
+        "to": "bin",
+        "filter": [
+          "scheduler_core.so",
+          "scheduler_core.dll",
+          "scheduler_core.dylib"
+        ]
+      }
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Education"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  },
+  "author": "Ayush",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
