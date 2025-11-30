@@ -1,6 +1,6 @@
 {
   "name": "school-scheduler",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "Smart Campus Scheduler",
   "main": "main.js",
   "scripts": {

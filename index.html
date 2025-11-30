@@ -1,136 +1,260 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Campus Scheduler</title>
-    <!-- External Libraries -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Link to Custom CSS -->
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Smart Campus Scheduler</title>
+        <!-- External Libraries -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast"></div>
+        <!-- Link to Custom CSS -->
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast"></div>
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="modal-overlay">
-        <div class="login-container">
-            <div class="login-card">
-                <div class="login-logo">
-                    <i class="fa-solid fa-graduation-cap"></i> <span>CampusLink</span>
+        <!-- LOGIN SCREEN -->
+        <div id="login-screen" class="modal-overlay">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-logo">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>CampusLink</span>
+                    </div>
+                    <h1 class="login-header">Welcome Back!</h1>
+                    <p class="login-subtext">
+                        Sign in to access the Smart Campus Scheduler
+                    </p>
+
+                    <input
+                        type="text"
+                        id="userId"
+                        class="login-input"
+                        placeholder="User ID (e.g., T101, S201)"
+                    />
+                    <input
+                        type="password"
+                        id="userPass"
+                        class="login-input"
+                        placeholder="Password"
+                    />
+
+                    <button class="login-btn" id="login-btn">Login</button>
+                    <div id="loginError" class="error-msg">
+                        Invalid ID or Password
+                    </div>
+
+                    <div class="credentials-hint">
+                        Teachers: teach123 | Students: learn123
+                    </div>
                 </div>
-                <h1 class="login-header">Welcome Back!</h1>
-                <p class="login-subtext">Sign in to access the Smart Campus Scheduler</p>
-                
-                <input type="text" id="userId" class="login-input" placeholder="User ID (e.g., T101, S201)">
-                <input type="password" id="userPass" class="login-input" placeholder="Password">
-                
-                <button class="login-btn" id="login-btn">Login</button>
-                <div id="loginError" class="error-msg">Invalid ID or Password</div>
-                
-                <div class="credentials-hint">
-                    Teachers: teach123 | Students: learn123
+            </div>
+        </div>
+
+        <!-- BOOKING MODAL -->
+        <div id="booking-modal" class="modal-overlay">
+            <div class="modal-card">
+                <h2 class="modal-title">Book Class Slot</h2>
+
+                <label>Select Class Type:</label>
+                <div class="radio-group">
+                    <label class="radio-option"
+                        ><input
+                            type="radio"
+                            name="classType"
+                            value="Theory"
+                            checked
+                        />
+                        Theory</label
+                    >
+                    <label class="radio-option"
+                        ><input type="radio" name="classType" value="Lab" />
+                        Lab</label
+                    >
+                </div>
+
+                <label>Instructions for Students (Optional):</label>
+                <textarea
+                    id="booking-instructions"
+                    class="form-input"
+                    style="height: 80px"
+                    placeholder="e.g. Bring Physics Lab Manual..."
+                ></textarea>
+
+                <div class="modal-actions">
+                    <button
+                        class="btn btn-cancel"
+                        onclick="window.app.closeModal()"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        class="btn btn-primary"
+                        onclick="window.app.confirmBooking()"
+                    >
+                        Confirm Booking
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- BOOKING MODAL -->
-    <div id="booking-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h2 class="modal-title">Book Class Slot</h2>
-            
-            <label>Select Class Type:</label>
-            <div class="radio-group">
-                <label class="radio-option"><input type="radio" name="classType" value="Theory" checked> Theory</label>
-                <label class="radio-option"><input type="radio" name="classType" value="Lab"> Lab</label>
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-calendar-days"></i> Scheduler Pro
             </div>
-            
-            <label>Instructions for Students (Optional):</label>
-            <textarea id="booking-instructions" class="form-input" style="height:80px;" placeholder="e.g. Bring Physics Lab Manual..."></textarea>
-            
-            <div class="modal-actions">
-                <button class="btn btn-cancel" onclick="window.app.closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="window.app.confirmBooking()">Confirm Booking</button>
+
+            <div
+                class="nav-item active"
+                onclick="window.app.switchView('dashboard')"
+                id="nav-dash"
+            >
+                <i class="fa-solid fa-table-columns"></i> Time Slots
             </div>
-        </div>
-    </div>
+            <div
+                class="nav-item"
+                onclick="window.app.switchView('attendance')"
+                id="nav-att"
+            >
+                <i class="fa-solid fa-clipboard-user"></i> Attendance
+            </div>
+            <div
+                class="nav-item"
+                onclick="window.app.switchView('leaderboard')"
+                id="nav-leader"
+            >
+                <i class="fa-solid fa-trophy"></i> Leaderboard
+            </div>
+            <div
+                class="nav-item"
+                onclick="window.app.switchView('feedback')"
+                id="nav-feed"
+            >
+                <i class="fa-solid fa-comment-dots"></i> Feedback
+            </div>
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="brand"><i class="fa-solid fa-calendar-days"></i> Scheduler Pro</div>
-        
-        <div class="nav-item active" onclick="window.app.switchView('dashboard')" id="nav-dash">
-            <i class="fa-solid fa-table-columns"></i> Time Slots
-        </div>
-        <div class="nav-item" onclick="window.app.switchView('attendance')" id="nav-att">
-            <i class="fa-solid fa-clipboard-user"></i> Attendance
-        </div>
-        <div class="nav-item" onclick="window.app.switchView('leaderboard')" id="nav-leader">
-            <i class="fa-solid fa-trophy"></i> Leaderboard
-        </div>
-        <div class="nav-item" onclick="window.app.switchView('feedback')" id="nav-feed">
-            <i class="fa-solid fa-comment-dots"></i> Feedback
-        </div>
-
-        <div class="nav-item logout" onclick="window.app.logout()">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main">
-        <div class="header">
-            <div class="page-title" id="page-title">Daily Schedule</div>
-            <div class="top-controls">
-                <button class="theme-toggle" onclick="window.app.toggleTheme()" title="Switch Theme">
-                    <i class="fa-solid fa-moon" id="theme-icon"></i>
-                </button>
-                <div class="user-badge" id="user-badge">Guest</div>
+            <div class="nav-item logout" onclick="window.app.logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
             </div>
         </div>
 
-        <!-- VIEW: DASHBOARD -->
-        <div id="view-dashboard" class="view-section active">
-            <!-- Day Toggle -->
-            <div class="day-switch">
-                <button class="day-btn active" id="btn-today" onclick="window.app.switchDay('today')">Today</button>
-                <button class="day-btn" id="btn-tomorrow" onclick="window.app.switchDay('tomorrow')">Tomorrow</button>
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div class="header">
+                <div class="page-title" id="page-title">Daily Schedule</div>
+                <div class="top-controls">
+                    <!-- NEW ANIMATED THEME SWITCHER -->
+                    <label class="theme-switch">
+                        <input
+                            type="checkbox"
+                            class="theme-switch__checkbox"
+                            id="theme-checkbox"
+                            onchange="window.app.toggleTheme()"
+                        />
+                        <div class="theme-switch__container">
+                            <div class="theme-switch__clouds"></div>
+                            <div class="theme-switch__stars-container">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 144 55"
+                                    fill="none"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M138.51 17.1581C140.717 17.1581 142.507 15.3686 142.507 13.1608C142.507 10.9531 140.717 9.16358 138.51 9.16358C136.302 9.16358 134.512 10.9531 134.512 13.1608C134.512 15.3686 136.302 17.1581 138.51 17.1581ZM110.126 19.2447C111.956 19.2447 113.44 17.7608 113.44 15.9307C113.44 14.1006 111.956 12.6167 110.126 12.6167C108.296 12.6167 106.812 14.1006 106.812 15.9307C106.812 17.7608 108.296 19.2447 110.126 19.2447ZM135.595 47.9307C137.425 47.9307 138.909 46.4468 138.909 44.6167C138.909 42.7866 137.425 41.3027 135.595 41.3027C133.765 41.3027 132.281 42.7866 132.281 44.6167C132.281 46.4468 133.765 47.9307 135.595 47.9307ZM11.4233 41.1281C12.8706 41.1281 14.0439 39.9548 14.0439 38.5075C14.0439 37.0602 12.8706 35.8869 11.4233 35.8869C9.97598 35.8869 8.80273 37.0602 8.80273 38.5075C8.80273 39.9548 9.97598 41.1281 11.4233 41.1281ZM31.6251 15.4293C32.7497 15.4293 33.6613 14.5177 33.6613 13.3931C33.6613 12.2685 32.7497 11.3569 31.6251 11.3569C30.5005 11.3569 29.5889 12.2685 29.5889 13.3931C29.5889 14.5177 30.5005 15.4293 31.6251 15.4293ZM26.0457 40.7577C27.1703 40.7577 28.0819 39.8461 28.0819 38.7215C28.0819 37.5969 27.1703 36.6853 26.0457 36.6853C24.9211 36.6853 24.0095 37.5969 24.0095 38.7215C24.0095 39.8461 24.9211 40.7577 26.0457 40.7577ZM31.2536 29.9234C31.8596 29.9234 32.3508 29.4321 32.3508 28.8262C32.3508 28.2202 31.8596 27.729 31.2536 27.729C30.6477 27.729 30.1565 28.2202 30.1565 28.8262C30.1565 29.4321 30.6477 29.9234 31.2536 29.9234ZM115.776 36.0336C116.382 36.0336 116.873 35.5424 116.873 34.9364C116.873 34.3305 116.382 33.8392 115.776 33.8392C115.17 33.8392 114.679 34.3305 114.679 34.9364C114.679 35.5424 115.17 36.0336 115.776 36.0336Z"
+                                        fill="white"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="theme-switch__circle-container">
+                                <div class="theme-switch__sun-moon-container">
+                                    <div class="theme-switch__moon">
+                                        <div class="theme-switch__spot"></div>
+                                        <div class="theme-switch__spot"></div>
+                                        <div class="theme-switch__spot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+
+                    <div class="user-badge" id="user-badge">Guest</div>
+                </div>
             </div>
-            
-            <div class="time-grid" id="slots-grid"></div>
-        </div>
 
-        <!-- VIEW: ATTENDANCE -->
-        <div id="view-attendance" class="view-section">
-            <div id="attendance-content"></div>
-        </div>
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <!-- Day Toggle -->
+                <div class="day-switch">
+                    <button
+                        class="day-btn active"
+                        id="btn-today"
+                        onclick="window.app.switchDay('today')"
+                    >
+                        Today
+                    </button>
+                    <button
+                        class="day-btn"
+                        id="btn-tomorrow"
+                        onclick="window.app.switchDay('tomorrow')"
+                    >
+                        Tomorrow
+                    </button>
+                </div>
 
-        <!-- VIEW: LEADERBOARD -->
-        <div id="view-leaderboard" class="view-section">
-            <div class="table-container">
-                <table class="data-table">
-                    <thead><tr><th>Rank</th><th>Student Name</th><th>Exam Score</th><th>Attendance Rate</th></tr></thead>
-                    <tbody id="leaderboard-body"></tbody>
-                </table>
+                <div class="time-grid" id="slots-grid"></div>
+            </div>
+
+            <!-- VIEW: ATTENDANCE -->
+            <div id="view-attendance" class="view-section">
+                <div id="attendance-content"></div>
+            </div>
+
+            <!-- VIEW: LEADERBOARD -->
+            <div id="view-leaderboard" class="view-section">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Student Name</th>
+                                <th>Exam Score</th>
+                                <th>Attendance Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: FEEDBACK -->
+            <div id="view-feedback" class="view-section">
+                <div class="center-box">
+                    <h2 class="section-title">Submit Feedback</h2>
+                    <p class="section-subtitle">
+                        Report facility issues or request equipment.
+                    </p>
+                    <textarea
+                        placeholder="Describe your issue or request..."
+                    ></textarea>
+                    <button
+                        class="btn btn-primary"
+                        onclick="
+                            window.app.showToast('Feedback Sent!', 'success')
+                        "
+                    >
+                        Submit Report
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- VIEW: FEEDBACK -->
-        <div id="view-feedback" class="view-section">
-            <div class="center-box">
-                <h2 class="section-title">Submit Feedback</h2>
-                <p class="section-subtitle">Report facility issues or request equipment.</p>
-                <textarea placeholder="Describe your issue or request..."></textarea>
-                <button class="btn btn-primary" onclick="window.app.showToast('Feedback Sent!', 'success')">Submit Report</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Link to Custom JS -->
-    <script src="script.js"></script>
-</body>
+        <!-- Link to Custom JS -->
+        <script src="script.js"></script>
+    </body>
 </html>
